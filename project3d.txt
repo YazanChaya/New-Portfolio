@@ -1,0 +1,468 @@
+import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
+import { useState } from "react";
+import { ArrowUpRight } from "lucide-react";
+import { ImageWithFallback } from "./figma/ImageWithFallback";
+import { useTheme } from "../context/ThemeContext";
+
+const CYAN = "#00E5CC";
+
+export function ProjectCard3D({ project, index }) {
+  const { theme } = useTheme();
+  const [isHovered, setIsHovered] = useState(false);
+
+  // Motion values for mouse position
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+
+  // Spring animation for smooth movement
+  const mouseXSpring = useSpring(x, { stiffness: 300, damping: 30 });
+  const mouseYSpring = useSpring(y, { stiffness: 300, damping: 30 });
+
+  // Transform mouse position to rotation
+  const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["12deg", "-12deg"]);
+  const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-12deg", "12deg"]);
+
+  // Handle mouse move
+  const handleMouseMove = (e) => {
+    if (!isHovered) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    const xPct = mouseX / width - 0.5;
+    const yPct = mouseY / height - 0.5;
+    x.set(xPct);
+    y.set(yPct);
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    x.set(0);
+    y.set(0);
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 50 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.6, delay: index * 0.15 }}
+      style={{
+        perspective: "1200px",
+        transformStyle: "preserve-3d",
+      }}
+      className="w-full"
+    >
+      <motion.div
+        onMouseMove={handleMouseMove}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={handleMouseLeave}
+        style={{
+          rotateX,
+          rotateY,
+          transformStyle: "preserve-3d",
+        }}
+        className="relative group cursor-pointer"
+      >
+        {/* Main Card */}
+        <div
+          className="relative overflow-hidden transition-all duration-500"
+          style={{
+            backgroundColor: theme === "dark" ? "#0A0A0A" : "#FFFFFF",
+            border:
+              theme === "dark"
+                ? "1px solid rgba(255,255,255,0.08)"
+                : "1px solid rgba(0,0,0,0.1)",
+            borderRadius: "12px",
+            boxShadow: isHovered
+              ? theme === "dark"
+                ? `0 30px 60px rgba(0,0,0,0.5), 0 0 40px ${CYAN}20`
+                : `0 30px 60px rgba(0,0,0,0.15), 0 0 40px ${CYAN}15`
+              : theme === "dark"
+              ? "0 10px 30px rgba(0,0,0,0.3)"
+              : "0 10px 30px rgba(0,0,0,0.08)",
+            transform: isHovered ? "translateZ(20px)" : "translateZ(0px)",
+            transition: "all 0.3s ease",
+          }}
+        >
+          {/* Project Number Badge */}
+          <div
+            className="absolute top-4 left-4 z-20"
+            style={{
+              transform: isHovered ? "translateZ(40px)" : "translateZ(0px)",
+              transition: "transform 0.3s ease",
+            }}
+          >
+            <div
+              style={{
+                fontFamily: "'IBM Plex Mono', monospace",
+                fontSize: "11px",
+                letterSpacing: "0.14em",
+                color: "#080808",
+                backgroundColor: CYAN,
+                padding: "6px 14px",
+                borderRadius: "4px",
+                fontWeight: 600,
+              }}
+            >
+              {project.index}
+            </div>
+          </div>
+
+          {/* Image Container */}
+          <div
+            className="relative overflow-hidden"
+            style={{
+              height: "320px",
+              transform: isHovered ? "translateZ(30px)" : "translateZ(0px)",
+              transition: "transform 0.3s ease",
+            }}
+          >
+            <ImageWithFallback
+              src={project.image}
+              alt={project.title}
+              className="w-full h-full object-cover transition-all duration-700"
+              style={{
+                transform: isHovered ? "scale(1.1)" : "scale(1)",
+                filter:
+                  theme === "dark"
+                    ? isHovered
+                      ? "brightness(0.7) contrast(1.1)"
+                      : "brightness(0.5) contrast(1)"
+                    : isHovered
+                    ? "brightness(0.9) contrast(1.05)"
+                    : "brightness(0.8) contrast(1)",
+              }}
+            />
+
+            {/* Gradient Overlay */}
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  theme === "dark"
+                    ? "linear-gradient(to bottom, transparent 0%, rgba(10,10,10,0.3) 50%, rgba(10,10,10,0.95) 100%)"
+                    : "linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0.95) 100%)",
+              }}
+            />
+
+            {/* Hover Glow Effect */}
+            <div
+              className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+              style={{
+                background: `radial-gradient(circle at center, ${CYAN}${
+                  theme === "dark" ? "20" : "15"
+                } 0%, transparent 60%)`,
+              }}
+            />
+
+            {/* Grid Overlay */}
+            <div
+              className="absolute inset-0 opacity-30"
+              style={{
+                backgroundImage:
+                  theme === "dark"
+                    ? "linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)"
+                    : "linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px)",
+                backgroundSize: "30px 30px",
+              }}
+            />
+
+            {/* View Project Button - Appears on Hover */}
+            <div
+              className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300"
+              style={{
+                transform: isHovered ? "translateZ(50px)" : "translateZ(0px)",
+              }}
+            >
+              <a
+                href={project.href}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-2 transition-all duration-300"
+                style={{
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontSize: "12px",
+                  letterSpacing: "0.14em",
+                  color: "#080808",
+                  backgroundColor: CYAN,
+                  padding: "14px 28px",
+                  borderRadius: "6px",
+                  textDecoration: "none",
+                  fontWeight: 600,
+                  boxShadow: `0 10px 30px ${CYAN}40`,
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                VIEW PROJECT
+                <ArrowUpRight size={16} />
+              </a>
+            </div>
+          </div>
+
+          {/* Content Section */}
+          <div
+            className="p-6"
+            style={{
+              transform: isHovered ? "translateZ(25px)" : "translateZ(0px)",
+              transition: "transform 0.3s ease",
+            }}
+          >
+            {/* Title */}
+            <h3
+              className="mb-2"
+              style={{
+                fontSize: "clamp(28px, 4vw, 36px)",
+                fontWeight: 700,
+                lineHeight: 1.1,
+                letterSpacing: "-0.02em",
+                color: theme === "dark" ? "#ffffff" : "#1A1A1A",
+              }}
+            >
+              {project.title}
+            </h3>
+
+            {/* Subtitle */}
+            <p
+              className="mb-4"
+              style={{
+                fontSize: "14px",
+                letterSpacing: "0.05em",
+                color: CYAN,
+                fontWeight: 500,
+                textTransform: "uppercase",
+              }}
+            >
+              {project.subtitle}
+            </p>
+
+            {/* Description */}
+            <p
+              className="mb-6"
+              style={{
+                fontSize: "14px",
+                lineHeight: 1.7,
+                color:
+                  theme === "dark"
+                    ? "rgba(255,255,255,0.5)"
+                    : "rgba(0,0,0,0.6)",
+                fontStyle: "italic",
+              }}
+            >
+              {project.quote.replace(/"/g, "")}
+            </p>
+
+            {/* Tags */}
+            <div className="flex flex-wrap gap-2">
+              {project.tags.map((tag, i) => (
+                <span
+                  key={tag}
+                  style={{
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontSize: "10px",
+                    letterSpacing: "0.1em",
+                    color:
+                      theme === "dark"
+                        ? "rgba(255,255,255,0.4)"
+                        : "rgba(0,0,0,0.5)",
+                    backgroundColor:
+                      theme === "dark"
+                        ? "rgba(255,255,255,0.05)"
+                        : "rgba(0,0,0,0.04)",
+                    border:
+                      theme === "dark"
+                        ? "1px solid rgba(255,255,255,0.1)"
+                        : "1px solid rgba(0,0,0,0.1)",
+                    padding: "6px 12px",
+                    borderRadius: "4px",
+                    transform: isHovered
+                      ? `translateZ(${15 + i * 2}px)`
+                      : "translateZ(0px)",
+                    transition: "transform 0.3s ease",
+                  }}
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Shine Effect on Hover */}
+          <div
+            className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"
+            style={{
+              background:
+                theme === "dark"
+                  ? "linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.03) 50%, transparent 100%)"
+                  : "linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.5) 50%, transparent 100%)",
+              transform: isHovered ? "translateX(100%)" : "translateX(-100%)",
+              transition: "transform 0.7s ease",
+            }}
+          />
+        </div>
+
+        {/* 3D Shadow Layer */}
+        <div
+          className="absolute inset-0 -z-10 rounded-xl"
+          style={{
+            background:
+              theme === "dark" ? "rgba(0,229,204,0.1)" : "rgba(0,229,204,0.08)",
+            filter: "blur(20px)",
+            transform: "translateZ(-30px) scale(0.95)",
+            opacity: isHovered ? 0.8 : 0,
+            transition: "opacity 0.3s ease",
+          }}
+        />
+      </motion.div>
+    </motion.div>
+  );
+}
+
+
+////////////////////////////////////////////////
+the project jsx
+import { motion } from "motion/react";
+import Project1 from "../../assets/images/projects/Project2.png";
+import Project2 from "../../assets/images/projects/Project1.png";
+import Project3 from "../../assets/images/projects/Project4.png";
+import { useTheme } from "../context/ThemeContext";
+import { ProjectCard3D } from "./ProjectCard3D";
+
+const projects = [
+  {
+    index: "01",
+    label: "FEAT_PROJECT_01",
+    title: "React Commerce",
+    subtitle: "Platform",
+    quote:
+      '"A high-performance e-commerce system designed for the curation of digital products with seamless checkout flows."',
+    tags: ["REACT.JS", "TAILWIND", "JAVASCRIPT", "REDUX"],
+    image: Project1,
+    href: "https://full-react-ecommerce.vercel.app/",
+  },
+  {
+    index: "02",
+    label: "FEAT_PROJECT_02",
+    title: "DriveLine",
+    subtitle: "Luxury Travel Service",
+    quote:
+      '"A premium service platform for booking exotic vehicles, private aviation, and yacht charters. Features a sleek, responsive interface that highlights high-end travel experiences and concierge-level service."',
+    tags: ["REACT.JS", "TAILWIND"],
+    image: Project2,
+    href: "https://driveline-final-project-gbf8.vercel.app/",
+  },
+  {
+    index: "03",
+    label: "FEAT_PROJECT_03",
+    title: "Weather App",
+    subtitle: "Website",
+    quote:
+      '"A functional weather dashboard that fetches real-time weather data based on user input or geolocation. Displays current conditions, temperature, and forecasts with a responsive UI."',
+    tags: ["REACT", "MUI", "REDUX", "AXIOS"],
+    image: Project3,
+    href: "https://weather-app-project-react.vercel.app/",
+  },
+];
+
+export function Projects() {
+  const { theme } = useTheme();
+  
+  return (
+    <section 
+      id="projects" 
+      className="relative py-20 md:py-28 transition-colors duration-500"
+      style={{
+        borderBottom: theme === "dark" ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(0,0,0,0.08)",
+      }}
+    >
+      <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-20">
+        {/* Section Header */}
+        <div className="mb-16">
+          <motion.p
+            initial={{ opacity: 0, x: -10 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            className="mb-6"
+            style={{
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize: "11px",
+              letterSpacing: "0.18em",
+              color: theme === "dark" ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.35)",
+            }}
+          >
+            // FEATURED_PROJECTS
+          </motion.p>
+
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            style={{
+              fontSize: "clamp(42px, 6vw, 72px)",
+              fontWeight: 700,
+              lineHeight: 1.1,
+              letterSpacing: "-0.02em",
+              color: theme === "dark" ? "#ffffff" : "#1A1A1A",
+              marginBottom: "16px",
+            }}
+          >
+            Selected
+            <br />
+            <span style={{ color: "#00E5CC", fontStyle: "italic" }}>
+              Work.
+            </span>
+          </motion.h2>
+
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+            style={{
+              fontSize: "15px",
+              lineHeight: 1.7,
+              color: theme === "dark" ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.5)",
+              maxWidth: "500px",
+            }}
+          >
+            A collection of projects that showcase my expertise in building modern, 
+            scalable web applications with cutting-edge technologies.
+          </motion.p>
+        </div>
+
+        {/* 3D Cards Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 lg:gap-10">
+          {projects.map((project, index) => (
+            <ProjectCard3D 
+              key={project.index} 
+              project={project} 
+              index={index}
+            />
+          ))}
+        </div>
+
+        {/* Bottom CTA */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mt-16 text-center"
+        >
+          <p
+            style={{
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize: "12px",
+              letterSpacing: "0.12em",
+              color: theme === "dark" ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.4)",
+            }}
+          >
+            MORE PROJECTS COMING SOON_//
+          </p>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
